@@ -1,0 +1,273 @@
+// backend/prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  username  String    @unique
+  password  String?
+  googleId  String?   @unique
+  avatar    String?
+  role      Role      @default(USER)
+  
+  // Preferences
+  keyboardLayout   KeyboardLayout @default(QWERTY)
+  theme            Theme          @default(LIGHT)
+  soundEnabled     Boolean        @default(true)
+  showHeatmap      Boolean        @default(true)
+  
+  // Stats
+  level           Int            @default(1)
+  xp              Int            @default(0)
+  currentStreak   Int            @default(0)
+  longestStreak   Int            @default(0)
+  totalTime       Int            @default(0)
+  totalLessons    Int            @default(0)
+  avgWPM          Float          @default(0)
+  avgAccuracy     Float          @default(0)
+  
+  // Relations
+  sessions        PracticeSession[]
+  achievements    UserAchievement[]
+  progress        LessonProgress[]
+  leaderboard     LeaderboardEntry[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([email])
+  @@index([level])
+  @@index([xp])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum KeyboardLayout {
+  QWERTY
+  AZERTY
+  DVORAK
+  COLEMAK
+  QWERTZ
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  HIGH_CONTRAST
+}
+
+model PracticeSession {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Session details
+  type          SessionType
+  textId        String?
+  customText    String?
+  duration      Int      // in seconds
+  wpm           Float
+  accuracy      Float
+  errors        Int
+  totalKeys     Int
+  keyPresses    Json     // Stores key-level data for heatmap
+  
+  // Timing data
+  startTime     DateTime
+  endTime       DateTime
+  
+  // Relations
+  lessonId      String?
+  lesson        Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@index([type])
+  @@index([wpm])
+}
+
+enum SessionType {
+  LESSON
+  PRACTICE
+  TIMED_TEST
+  CUSTOM
+}
+
+model Lesson {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  content       String
+  difficulty    Difficulty
+  order         Int
+  language      String   @default("en")
+  keyboardFocus Json
+  expectedWPM   Int
+  minAccuracy   Float
+  timeEstimate  Int      // in minutes
+  
+  // Relations
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  sessions      PracticeSession[]
+  progress      LessonProgress[]
+  
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([categoryId, order])
+  @@index([difficulty])
+  @@index([categoryId])
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+model Category {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  icon          String?
+  order         Int
+  lessons       Lesson[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([order])
+}
+
+model LessonProgress {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId      String
+  lesson        Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  completed     Boolean  @default(false)
+  bestWPM       Float
+  bestAccuracy  Float
+  attempts      Int      @default(0)
+  timeSpent     Int      @default(0)
+  
+  lastAttempt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+}
+
+model Achievement {
+  id            String   @id @default(cuid())
+  name          String
+  description   String
+  icon          String
+  criteriaType  CriteriaType
+  criteriaValue Int
+  xpReward      Int
+  rarity        Rarity   @default(COMMON)
+  
+  users         UserAchievement[]
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([criteriaType])
+}
+
+enum CriteriaType {
+  TOTAL_WPM
+  ACCURACY
+  STREAK_DAYS
+  TOTAL_LESSONS
+  TOTAL_TIME
+  PERFECT_LESSON
+  LEVEL
+}
+
+enum Rarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  
+  unlockedAt    DateTime @default(now())
+  progress      Int?     // For progressive achievements
+  
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+}
+
+model LeaderboardEntry {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Period
+  periodType    PeriodType
+  periodStart   DateTime
+  periodEnd     DateTime
+  
+  // Scores
+  wpm           Float
+  accuracy      Float
+  totalSessions Int
+  rank          Int
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([periodType, periodStart])
+  @@unique([userId, periodType, periodStart])
+  @@index([wpm])
+  @@index([rank])
+}
+
+enum PeriodType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  ALL_TIME
+}
+
+model TextContent {
+  id            String   @id @default(cuid())
+  content       String
+  source        String
+  category      String
+  difficulty    Difficulty
+  language      String   @default("en")
+  length        Int
+  wordCount     Int
+  
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+}
