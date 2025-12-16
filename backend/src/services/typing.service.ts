@@ -252,6 +252,14 @@ export class TypingService {
       });
     } else {
       // Create new entry
+      const rank = await prisma.leaderboardEntry.count({
+        where: {
+          periodType,
+          periodStart,
+          wpm: { gt: result.wpm }
+        }
+      }) + 1;
+
       await prisma.leaderboardEntry.create({
         data: {
           userId,
@@ -260,7 +268,8 @@ export class TypingService {
           periodEnd: new Date(periodStart.getTime() + (periodType === 'DAILY' ? 86400000 : 604800000)),
           wpm: result.wpm,
           accuracy: result.accuracy,
-          totalSessions: 1
+          totalSessions: 1,
+          rank
         }
       });
     }

@@ -1,8 +1,8 @@
 // backend/src/controllers/auth.controller.ts
-import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { config } from '../config/env';
 
@@ -65,20 +65,20 @@ export const authController = {
       // Generate tokens
       const accessToken = jwt.sign(
         { userId: user.id, role: user.role },
-        config.JWT_SECRET!,
+        config.jwt.secret,
         { expiresIn: '15m' }
       );
       
       const refreshToken = jwt.sign(
         { userId: user.id },
-        config.JWT_REFRESH_SECRET!,
+        config.jwt.refreshSecret,
         { expiresIn: '7d' }
       );
       
       // Store refresh token
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: config.NODE_ENV === 'production',
+        secure: config.server.nodeEnv === 'production',
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000
       });
@@ -90,7 +90,7 @@ export const authController = {
       
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
+        return res.status(400).json({ error: error.issues });
       }
       res.status(500).json({ error: 'Registration failed' });
     }
@@ -127,13 +127,13 @@ export const authController = {
       // Generate tokens
       const accessToken = jwt.sign(
         { userId: user.id, role: user.role },
-        config.JWT_SECRET!,
+        config.jwt.secret,
         { expiresIn: '15m' }
       );
       
       const refreshToken = jwt.sign(
         { userId: user.id },
-        config.JWT_REFRESH_SECRET!,
+        config.jwt.refreshSecret,
         { expiresIn: '7d' }
       );
       
@@ -146,7 +146,7 @@ export const authController = {
       // Store refresh token
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: config.NODE_ENV === 'production',
+        secure: config.server.nodeEnv === 'production',
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000
       });
@@ -160,7 +160,7 @@ export const authController = {
       
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
+        return res.status(400).json({ error: error.issues });
       }
       res.status(500).json({ error: 'Login failed' });
     }
@@ -174,7 +174,7 @@ export const authController = {
         return res.status(401).json({ error: 'Refresh token required' });
       }
       
-      const decoded = jwt.verify(refreshToken, config.JWT_REFRESH_SECRET!) as {
+      const decoded = jwt.verify(refreshToken, config.jwt.refreshSecret) as {
         userId: string;
       };
       
@@ -189,7 +189,7 @@ export const authController = {
       
       const accessToken = jwt.sign(
         { userId: user.id, role: user.role },
-        config.JWT_SECRET!,
+        config.jwt.secret,
         { expiresIn: '15m' }
       );
       

@@ -1,11 +1,10 @@
 // backend/src/index.ts
-import express from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
+import express from 'express';
 import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import { config } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
-import { authenticate } from './middleware/auth';
 import apiRoutes from './routes';
 
 const app = express();
@@ -13,7 +12,7 @@ const app = express();
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: config.CLIENT_URL,
+  origin: config.server.clientUrl,
   credentials: true
 }));
 app.use(express.json());
@@ -32,7 +31,7 @@ app.use('/api', apiRoutes);
 // Error handling
 app.use(errorHandler);
 
-const PORT = config.PORT || 5000;
+const PORT = config.server.port || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
