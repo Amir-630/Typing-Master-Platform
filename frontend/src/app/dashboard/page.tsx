@@ -5,11 +5,13 @@ import {
     Award,
     BarChart as BarChartIcon,
     Clock,
+    LogOut,
     Target,
     TrendingUp,
     Trophy,
     Zap
 } from 'lucide-react';
+import Link from 'next/link';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Cell, Line, LineChart, Pie, PieChart } from 'recharts';
@@ -48,6 +50,43 @@ const Dashboard: React.FC = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-2">
+              <Zap className="h-8 w-8 text-blue-600" />
+              <span className="text-2xl font-bold text-gray-900">Typing Master</span>
+            </div>
+            <div className="flex gap-6">
+              <Link
+                href="/dashboard"
+                className="text-gray-700 font-medium hover:text-blue-600"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/practice"
+                className="text-gray-700 font-medium hover:text-blue-600"
+              >
+                Practice
+              </Link>
+              <Link
+                href="/lessons"
+                className="text-gray-700 font-medium hover:text-blue-600"
+              >
+                Lessons
+              </Link>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-gray-700 font-medium">{user?.username}</span>
+            <button className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </nav>
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

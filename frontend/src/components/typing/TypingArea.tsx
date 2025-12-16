@@ -182,7 +182,11 @@ const TypingArea: React.FC<TypingAreaProps> = ({ text, lessonId, onComplete }) =
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
             <div className="mb-6">
-              <StatsDisplay stats={currentStats} />
+              <div className="grid grid-cols-3 gap-4">
+                <StatsDisplay label="WPM" value={currentStats.wpm.toFixed(1)} />
+                <StatsDisplay label="Accuracy" value={`${currentStats.accuracy.toFixed(1)}%`} />
+                <StatsDisplay label="Time" value={`${Math.floor(currentStats.time)}s`} />
+              </div>
             </div>
             
             <div className="mb-6">
